@@ -14,7 +14,8 @@ def slack():
     sc.api_call(
       "chat.postMessage",
       channel="#general",
-      text="Shhhh! Estan en call!"
+      text="Shhhh! Estan en call!",
+      as_user=True
     )
     return "sent"
 
