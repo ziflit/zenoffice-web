@@ -1,2 +1,5 @@
 flask
 slackclient
+Flask-PyMongo
+ipdb
+requests
