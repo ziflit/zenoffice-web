@@ -39,8 +39,9 @@ def day_tts_data():
     }, {'_id': False}).sort("timestamp")
     str_data =  dumps(d)
     dict_response = json.loads(str_data)
+    outside_temp = get_current_temperature()
     for d in dict_response:
-        d.update({'outside_temp': get_current_temperature()})
+        d.update({'outside_temp': outside_temp})
     return dumps(dict_response)
 
 @app.route("/slack")
@@ -51,11 +52,13 @@ def slack():
 @app.route("/add_ttss", methods=['POST'])
 def add_ttss():
     insert_data = parse_data(json.loads(request.data))
+    if insert_data['temperature'] > 100:
+        return json.dumps({}), 400, {'Content-Type': 'application/json'}
     mongo.db.ttss.insert_one(insert_data)
     return json.dumps({'success': True}), 200, {'Content-Type': 'application/json'}
 
 def parse_data(raw_data):
-    raw_data['timestamp'] = datetime.datetime.now().strftime("%s")
+    raw_data['timestamp'] = int(datetime.datetime.now().strftime("%s"))
     return raw_data
 
 def last_tts_data():
