@@ -1,7 +1,8 @@
 import os
 import json
-from bson.json_util import dumps
 import datetime
+from bson.json_util import dumps
+import requests
 from slackclient import SlackClient
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
@@ -37,7 +38,10 @@ def day_tts_data():
         }
     }, {'_id': False}).sort("timestamp")
     str_data =  dumps(d)
-    return jsonify(str_data)
+    dict_response = json.loads(str_data)
+    for d in dict_response:
+        d.update({'outside_temp': get_current_temperature()})
+    return dumps(dict_response)
 
 @app.route("/slack")
 def slack():
@@ -56,7 +60,18 @@ def parse_data(raw_data):
 
 def last_tts_data():
     cursor = mongo.db.ttss.find({}, {'_id': False}).sort('timestamp', -1).limit(1)
-    return dumps(cursor)
+    dict_data = json.loads(dumps(cursor[0]))
+    dict_data.update({'outside_temp': get_current_temperature()})
+    return dumps(dict_data)
+
+def get_current_temperature():
+    CITY_ID = "3433955"
+    API_KEY = "c37a488f612d951d0d5615e155299e66"
+    WEATHER_API = "http://samples.openweathermap.org/data/2.5/weather?id=%s&appid=%s" % (CITY_ID, API_KEY)
+    response = requests.get(WEATHER_API)
+    if response.status_code == 200:
+        return response.json()['main']['temp'] - 273.15
+    return None
 
 @app.route("/configuration", methods=['GET','POST'])
 def configuration():
