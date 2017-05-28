@@ -39,7 +39,7 @@ def slack():
 
 @app.route("/add_ttss", methods=['POST'])
 def add_ttss():
-    insert_data = parse_data(request.get_json(silent=True))
+    insert_data = parse_data(json.loads(request.data))
     mongo.db.ttss.insert_one(insert_data)
     return json.dumps({'success': True}), 200, {'Content-Type': 'application/json'}
 
