@@ -12,7 +12,9 @@ app = Flask(__name__)
 CORS(app)
 app.config['MONGO_DBNAME'] = 'zenoffice'
 mongo = PyMongo(app)
-slack_token = os.environ["SLACK_BOT_TOKEN"]
+slack_token = "xoxb-188898865011-zauE7xIJ9CKo3fzuzgvXrzUz"
+ALREADY_NOTIFIED = 0
+notify_count = 0
 sc = SlackClient(slack_token)
 config = {
     "on_call": False,
@@ -51,10 +53,19 @@ def slack():
 
 @app.route("/add_ttss", methods=['POST'])
 def add_ttss():
+    global ALREADY_NOTIFIED
+    global notify_count
     insert_data = parse_data(json.loads(request.data))
     if insert_data['temperature'] > 100:
         return json.dumps({}), 400, {'Content-Type': 'application/json'}
     mongo.db.ttss.insert_one(insert_data)
+    if insert_data['volume'] == 1: # superamos el umbral de ruido
+        if notify_count == 0:
+            ALREADY_NOTIFIED = 1
+            slack_message('Hay demasiado ruido! Tratemos de reducir', '#general')
+        notify_count += 1
+        notify_count = notify_count % 4
+
     return json.dumps({'success': True}), 200, {'Content-Type': 'application/json'}
 
 def parse_data(raw_data):

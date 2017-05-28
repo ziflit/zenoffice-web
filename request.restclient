@@ -1,0 +1,7 @@
+POST http://127.0.0.1:5000/configuration
+Content-Type: application/json
+{
+ "on_call": false
+}
+
+# GET http://127.0.0.1:5000/tts?from=123
