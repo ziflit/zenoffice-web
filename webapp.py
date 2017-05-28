@@ -13,6 +13,13 @@ app.config['MONGO_DBNAME'] = 'zenoffice'
 mongo = PyMongo(app)
 slack_token = os.environ["SLACK_BOT_TOKEN"]
 sc = SlackClient(slack_token)
+config = {
+    "on_call": False,
+    "polling_frequency_ms": 2000,
+    "sound_threshold": 5,
+    "hot_threshold": 26,
+    "cold_threshold": 17,
+    }
 
 @app.route("/")
 def dashboard():
@@ -50,6 +57,20 @@ def parse_data(raw_data):
 def last_tts_data():
     cursor = mongo.db.ttss.find({}, {'_id': False}).sort('timestamp', -1).limit(1)
     return dumps(cursor)
+
+@app.route("/configuration", methods=['GET','POST'])
+def configuration():
+    if request.method == 'GET':
+        return fetch_configuration()
+    else:
+        return set_configuration(request.get_json())
+
+def fetch_configuration():
+    return jsonify(config)
+
+def set_configuration(data):
+    config.update(data)
+    return json.dumps({'success': True}), 200, {'Content-Type': 'application/json'}
 
 
 def slack_message(text, channel):
